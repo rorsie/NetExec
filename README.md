@@ -94,8 +94,7 @@ Now we officially have access to the network as a full domain admin.
 <br />
 <br />
 <h3 align="center">Final Thoughts</h3>
-This project really caught my eye initially due to the visualization of all the attacks at the end. Maybe its just me, but it helps connect evreything together when you can plot it out on a map that has more relevance to the real world than just seeing IP addresses and coordinates. This also let me get some much needed experience with Azure and Sentinel, two very prominent and powerful tools. It also introduced me into some powershell scripts which also look very handy. Logs are not a new thing, but seeing how they are created, organized, and manipulated in Azure was new, so that was also beneficial. Overall, I think this was a great project that helped introduce me to Azure, Sentinel, Powershell, Azure logs, and incident detection. It also only took a 2-3 hours. Thanks for reading.
-
+Coming soon...
  
 </p>
 
