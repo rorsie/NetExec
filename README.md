@@ -1,74 +1,96 @@
 # NetExec Enumeration and Exploitation
 
 <h2>Description</h2>
-Using NetExec and Bloodhound, I will go through a simulated network of VMs that consisted of various different types of servers (file server, domain controller, etc.) to enumerate and exploit any vulnerabilities so that I may obtain access or an account with elevated privleges. Lab created by John Hammond (https://jh.live/nypt)
+Using NetExec and Bloodhound, I will go through a simulated network of VMs that consisted of various different types of servers (file server, domain controller, and SQL server) to enumerate and exploit any vulnerabilities so that I may obtain access or an account with elevated privleges. Lab created by John Hammond (https://jh.live/nypt)
 <br />
 
 
-<h2>Platforms and Utilities Used</h2>
+<h2>Languages and Utilities Used</h2>
 
 - <b>NetExec</b> 
 - <b>Kali Linux</b>
 - <b>Bloodhound</b>
-- <b>Virtual machines</b> 
+- <b>John the Ripper</b>
+- <b>Impacket</b>
+- <b>Virtual machines</b>
+- <b>Python</b>
 
 <h2>Project Walkthrough:</h2>
 
 <p>
 <h3 align="center">Initial Setup</h3> <br/>
-For the first part, I had to set up the Azure account. I had never used Azure before, so I used this time to get more familiar with the layout and services it provides. Azure has a lot more stuff than I ever realized, but thankfully it has a search function and decent tutorials. 
- <img src=" alt="Initial setup">
+After the VMs have booted up, I only needed to add the IP addresses to the /etc/hosts file on the Kali VM to be able to connect directly.
 <br />
 <br />
-<h3 align="center">Creating the Honeypot VM</h3> <br/>
- Next is getting the honeypot up in running in Azure with a VM. This was a fairly simple process. I searched for "virtual machine' in the search bar and began to fill out some of the settings. I created the initial resource group, chose US East for the region, and decided to go with a Windows 10 Professional image. Unfortunately the image does not reflect the options I chose, since I took the screenshot before configuring it. Very smart, I know.
-<img src="https://i.ib0011jq/createa-VM.png">
+<h3 align="center">SMB Share Enumeration/h3> <br/>
+NetExec makes enumerating shares on this simulated network easy. First I try a NULL session by supplying no username or password. Once that doesn't show anything useful, I try the guest/anonymous session next. This time we at least find the shares and see that we have read permissions on a couple
+<img src="authenticateSMB">
+<img src="SMBguest">
 <br />
 <br />
- <h3 align="center"> "Adjusting" the Network Security Group</h3>
-Now I create a new, custom network security group under the "Networking" tab. I add a single rule that is basically an implicit allow. This will make it easy target for whichever person or machine tries to remotely connect to it. 
-<img src="https://i.ibb.co/0DjFNpX/sketchyfirewall.png">
+ <h3 align="center">Finding the Right User</h3>
+Next, I perform another NULL session but with the "--users" parameter. Luckily this works out perfectly and I find a very interesting user...
+<img src="enumerateUSERSnull">
+ <br />
+Now I'll check if these credentials actually work over SMB. Looks like they do!
+<img src="SMBauthSUCCESSreal">
  <br />
  <br />
-<h3 align="center"> Creating the Log Analystics Workspace </h3>
-This is where the logs will be collected in order to be extracted to our heat map of attacks that I will eventually create. I put it in the same resource group and region just to be safe. I then had to connect it to the VM, which was quite easy as shown.
-<img src="https://i.i1qr3/loganalyticsworkspace.png">
-
+<h3 align="center"> Bringing the Bloodhound Out</h3>
+It's time to really map out this domain and see if there are any Kerberoastable users. For this, I will first export the necessary data from the domain controller in a format fit for Bloodhound/
+<img src="bloodhoundCOLLECTION">
+<br />
+Then I upload all the JSON files to Bloodhound (after logging in of course).
+<img src="UPLOADbloodhound">
+<br />
+Now at the Explore tab, I can search for clients with some very sharp searching tools. For now, I will use the "Cypher" tab to input a custom search to find any users susceptible to Kerberoasting. Our target has now shown up.
+<img src="KERBEROASTABLE">
 <br />
 <br />
-<h3 align="center">Setting up Sentinel</h3>
-Now I add Sentinel to the VM to be able to monitor and map these attacks later. Fairly simple process as well, as I just search for Sentinel and add it to the honeypot workplace.
-<img src="https://i.create-Sentinel.png">
+<h3 align="center">The Roast Begins</h3>
+Time to use NetExec to dump the hash of the user we found. You probably know what is coming next.
+<img src="johnHASH">
+ <br />
+ The trusty John the Ripper comes in handy once again to crack this hash quickly. Now we have access to that account and the SQL server!
+<img src="johntheRIPPER">
+<img src="kerberosAUTH">
 <br />
 <br />
- <h3 align="center">Connecting to the honeypot</h3>
-Next step was to connect to the VM to tear down the security and check some stuff out. I simply used the Remote Desktop Connection tool from my personal desktop to connect to the public IP address given to me. Of course, I used my personal computer login information which caused me to the first failed remote connection to the honeypot. Once I used the correct credentials and adjusted the resolution, I was in. This screenshot thankfully illustrates the resource group name and the correct zone I mentioned that the VM is located in. 
- <img src="https://i.ibb.co/XtDrrRv/RDP-to-VM.png">
+ <h3 align="center">Ever-reaching Tenderils</h3>
+Impacket has come to my aid to help us remotely log in to the SQL server with the newly acquried credential set.
+ <img src="impacketSQLlogin">
+<br />
+Now I can run a quick 'enum_db' to see all the databases. The 'users' database looks interesting, so I will see if I can search for anything inside there first. What I find is even more intriguing.
+ <img src="SQLdbEnum">
+<br />
+ A quick query will give me all I need to know to continue expanding into the network. We'll have to see where these work.
+<img src="SQLaccountCREDENTIALS">
 <br />
 <br />
-<h3 align="center">Making the Honeypot Sweet</h3>
- After waiting a few years for the VM to become responsive and setting up Windows, I started getting to work "adjusting" the firewall and security features first. I also checked event viewer to see the Windows security logs and get more familiar with them as a whole. After that, it was time to disable the firewall on all network types.
- <img src="https://i.ibb.
+<h3 align="center">Final Rungs of the Ladder</h3>
+Since I have Bloodhound still open, I can do a quick search for this new user to see if he comes with any interesting bells or whistles. I would say being part of the "FSADMINS" group is a pretty shiny bell.
+<img src="bloodhoundBENJAMIN">
+<br />
+Now we plug the credentials in and aim it at the file server. He got Pwn3d! This means Benjamin is a local admin on the file server!
+<img src="benjiPWN3d">
+This access gives us more options. I used NetExec to dump the SAM hashes, which could come in use later, and to check other logged on users. A new target reveals itself, one from the domain controller nonetheless.
+<img src="SAMDUMPloggedon">
+ <br />
+ Since I still have local admin access (thanks Benjamin), I can use NetExec to run commands as 'johna'.
+ <img src="whoamiJOHNA">
  <br />
  <br />
- <h3 align="center">The Powershell Script</h3>
- Along with the whole guide of this project, <a href="https://www.youtube.com/@JoshMadakor">Josh Madakor</a> provided a handy Powershell script that we will be running to collect the IP addresses of the attackers. We will run this script on the VM itself. This script also includes an API from https://ipgeolocation.io/ to acquire the longitude and latitude from the IP addresses. This will also create a log file that includes information such as coordinates, source IP, country, username, and timestamps. Now we connect these logs to Azure so we can extract the data we get from running this script. 
- <img src="https://i.
- <br />
- <br />
-<h3 align="center">Creating Our Custom Log</h3>
-Now we have to bring the data into Azure so we can create our heat map. First, I simpyly copy the sample logs to recreate the file on my personal desktop. This is what we will use as a sample for our log in the Log Analytics Workspace. 
-<img src="https://i.ibb.co/m9ynkQV/creatin
- <br />
- <br />
-<h3 align="center">Extracting the Data into Sentinel</h3>
-Now we need a way to extract the data in the correct format so we can finally plot everything out accurately. I created a workbook in Sentinel and used a custom scipt to extract each piece of infromation separately (and exclude the sample logs).
-<img src="https://i.ibb.">
+<h3 align="center"> Wait, That Means...</h3>
+Yes! Code execution as a domain admin! Now we can really heat this up. (Especially because Windows Defender is disabled in this environment) <br/>
+It's time to start on the reverse shell. I create this with 'msfvenom'. Just a standard, stageless, Meterpreter shell will do. Since this is a Meterpreter shell, I must start up multi/handler.
+<img src="multihandler">
+To get our payload to the target, I will simply set up a Python web server ("python3 -m http.server") and execute some commands to have it be downloaded by our target.
+<img src="pythonserver">
+<img src="payload1">
 <br />
-<br />
-<h3 align="center">The Results</h3>
-So, the IP geolocation API have 1000 free uses and I ran out in 10-15 minutes of running the script. This was mostly thanks to a guy in Seychelles as you can see below. It seems our top 3 offending countries were Seychelles, the Netherlands, and Panama. By the source IPs I saw running in the script, it seems these were results of brute force attacks as all of the attacks from these countries came from the same IP. Also, I believe my IP shows up as well because of some of my failed attempts near the beginning, whoops!
-<img src="https://i.ibbs-APIranout.png">
+Now we officially have access to the network as a full domain admin.
+<img src="payload3">
+<img src="iminJOHN">
 <br />
 <br />
 <h3 align="center">Final Thoughts</h3>
