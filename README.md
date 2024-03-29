@@ -22,7 +22,8 @@ Using NetExec and Bloodhound, I will go through a simulated network of VMs that 
 After the VMs have booted up, I only needed to add the IP addresses to the /etc/hosts file on the Kali VM to be able to connect directly.
 <br />
 <br />
-<h3 align="center">SMB Share Enumeration/h3> <br/>
+<h3 align="center">SMB Share Enumeration</h3> 
+<br/>
 NetExec makes enumerating shares on this simulated network easy. First I try a NULL session by supplying no username or password. Once that doesn't show anything useful, I try the guest/anonymous session next. This time we at least find the shares and see that we have read permissions on a couple
 <img src="https://i.ibb.co/M9VtbqY/authenticate-SMBshares-ATTEMPT.png" alt="Authenticating SMB shares" border="0">
 <img src="https://i.ibb.co/42DR8ff/SMBguest.png" alt="SMB Guest" border="0">
