@@ -30,6 +30,7 @@ NetExec makes enumerating shares on this simulated network easy. First I try a N
 <br />
 <br />
  <h3 align="center">Finding the Right User</h3>
+ <br />
 Next, I perform another NULL session but with the "--users" parameter. Luckily this works out perfectly and I find a very interesting user...
 <img src="https://i.ibb.co/Ypcshvf/enumerate-USERSnull.png" alt="Enumerate users with NULL" border="0">
  <br />
@@ -38,6 +39,7 @@ Now I'll check if these credentials actually work over SMB. Looks like they do!
  <br />
  <br />
 <h3 align="center"> Bringing the Bloodhound Out</h3>
+<br />
 It's time to really map out this domain and see if there are any Kerberoastable users. For this, I will first export the necessary data from the domain controller in a format fit for Bloodhound/
 <img src="https://i.ibb.co/599rDNr/blooudhound-COLLECTION.png" alt="Using NetExec to dump the data for Bloodhound" border="0">
 <br />
@@ -49,6 +51,7 @@ Now at the Explore tab, I can search for clients with some very sharp searching 
 <br />
 <br />
 <h3 align="center">The Roast Begins</h3>
+<br />
 Time to use NetExec to dump the hash of the user we found. You probably know what is coming next.
 <img src="https://i.ibb.co/Lv1zc8W/johnHASH.png" alt="Dumping the hash of the user" border="0">
  <br />
@@ -58,6 +61,7 @@ Time to use NetExec to dump the hash of the user we found. You probably know wha
 <br />
 <br />
 <h3 align="center">Ever-reaching Tenderils</h3>
+<br />
 Impacket has come to my aid to help us remotely log in to the SQL server with the newly acquried credential set.
 <img src="https://i.ibb.co/chtnzGj/impacket-SQLlogin.png" alt="Using Impacket to send over the credentials" border="0">
 <br />
@@ -69,6 +73,7 @@ Now I can run a quick 'enum_db' to see all the databases. The 'users' database l
 <br />
 <br />
 <h3 align="center">Final Rungs of the Ladder</h3>
+<br />
 Since I have Bloodhound still open, I can do a quick search for this new user to see if he comes with any interesting bells or whistles. I would say being part of the "FSADMINS" group is a pretty shiny bell.
 <img src="https://i.ibb.co/1bNpDPL/bloodhound-BENJAMIN.png" alt="Using Bloodhound to see what Benjamin is connected to in the network" border="0">
 <br />
@@ -83,6 +88,7 @@ This access gives us more options. I used NetExec to dump the SAM hashes, which 
  <br />
  <br />
 <h3 align="center"> Wait, That Means...</h3>
+<br />
 Yes! Code execution as a domain admin! Now we can really heat this up. (Especially because Windows Defender is disabled in this environment) <br/>
 It's time to start on the reverse shell. I create this with 'msfvenom'. Just a standard, stageless, Meterpreter shell will do. Since this is a Meterpreter shell, I must start up multi/handler.
 <img src="https://i.ibb.co/w4jxNXp/multihandler.png" alt="Setting up multi/handler" border="0">
