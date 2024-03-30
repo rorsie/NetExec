@@ -103,7 +103,7 @@ Now we officially have access to the network as a full domain admin.
 <br />
 <br />
 <h3 align="center">Final Thoughts</h3>
-Coming soon...
+Overall, this was a very fun and engaging project. I thought it may be over my skill level, but I had very little trouble following along and fully understanding what I was doing at each step. It has a great premise and VMs set up to make everything far more authentic. It may seem like an advertisment for NetExec/Bloodhound, and it kind of is (I am not getting paid), but they genuinely seem like pretty powerful and useful tools that I have only just sratched the surface of. Definitely worth the price since I feel like I have learned a good amount by going through this project and refined some of my existing skills even more. Highly recommended!
  
 </p>
 
